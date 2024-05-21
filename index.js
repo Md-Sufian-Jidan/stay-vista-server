@@ -13,11 +13,11 @@ const corsOptions = {
   origin: ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
   optionSuccessStatus: 200,
-}
-app.use(cors(corsOptions))
+};
+app.use(cors(corsOptions));
 
-app.use(express.json())
-app.use(cookieParser())
+app.use(express.json());
+app.use(cookieParser());
 
 // Verify Token Middleware
 const verifyToken = async (req, res, next) => {
@@ -31,10 +31,10 @@ const verifyToken = async (req, res, next) => {
       console.log(err)
       return res.status(401).send({ message: 'unauthorized access' })
     }
-    req.user = decoded
-    next()
-  })
-}
+    req.user = decoded;
+    next();
+  });
+};
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.qvjjrvn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -76,10 +76,15 @@ async function run() {
         res.status(500).send(err)
       }
     });
+    // Save a room data in db
+    app.post('/room', async (req, res) => {
+      const room = req.body;
+      const result = await roomsCollection.insertOne(room);
+      res.send(result);
+    })
     // Get all rooms from db
     app.get('/rooms', async (req, res) => {
       const category = req.query.category;
-      console.log(category);
       let query = {};
       if (category && category !== 'null') query = { category };
       const result = await roomsCollection.find(query).toArray();
