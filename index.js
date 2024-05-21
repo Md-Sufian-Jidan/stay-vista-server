@@ -98,6 +98,13 @@ async function run() {
       const result = await roomsCollection.find(query).toArray();
       res.send(result);
     });
+    // delete room
+    app.delete('/room/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await roomsCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // Get single room data from db using id
     app.get('/room/:id', async (req, res) => {
