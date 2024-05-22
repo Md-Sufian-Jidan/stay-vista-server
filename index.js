@@ -3,7 +3,7 @@ const app = express()
 require('dotenv').config()
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
+const { MongoClient, ServerApiVersion, ObjectId, Timestamp } = require('mongodb')
 const jwt = require('jsonwebtoken')
 
 const port = process.env.PORT || 8000
@@ -49,6 +49,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const roomsCollection = client.db('stayVistaHotel').collection('rooms');
+    const usersCollection = client.db('stayVistaHotel').collection('users');
     // auth related api
     app.post('/jwt', async (req, res) => {
       const user = req.body;
@@ -76,6 +77,23 @@ async function run() {
         res.status(500).send(err)
       }
     });
+    // save a user data in db
+    app.put('/user', async (req, res) => {
+      const user = req.body;
+      // check if user all ready exists in db
+      const isExists = await usersCollection.findOne({ email: user?.email });
+      if (isExists) return res.send(isExists);
+      const options = { upsert: true };
+      const query = { email: user?.email };
+      const updateDoc = {
+        $set: {
+          ...user,
+          timestamp: new Date(),
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    })
     // Save a room data in db
     app.post('/room', async (req, res) => {
       const room = req.body;
