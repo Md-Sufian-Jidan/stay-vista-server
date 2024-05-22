@@ -80,11 +80,26 @@ async function run() {
     // save a user data in db
     app.put('/user', async (req, res) => {
       const user = req.body;
-      // check if user all ready exists in db
-      const isExists = await usersCollection.findOne({ email: user?.email });
-      if (isExists) return res.send(isExists);
-      const options = { upsert: true };
       const query = { email: user?.email };
+      // check if user all ready exists in db
+      const isExists = await usersCollection.findOne(query);
+      // if status is requested
+      if (isExists) {
+        if (user?.status === 'Requested') {
+          // if existing user try to change his role
+          const result = await usersCollection.updateOne(query,
+            { $set: { status: user?.status } }
+          );
+          return res.send(result);
+        }
+        else {
+          // if user exists return the user data
+          // if existing user login again
+          return res.send(isExists);
+        }
+      }
+      // save user for the first time
+      const options = { upsert: true };
       const updateDoc = {
         $set: {
           ...user,
@@ -93,7 +108,14 @@ async function run() {
       };
       const result = await usersCollection.updateOne(query, updateDoc, options);
       res.send(result);
+    });
+
+    //get all users data from db
+    app.get('/users', async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
     })
+
     // Save a room data in db
     app.post('/room', async (req, res) => {
       const room = req.body;
