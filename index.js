@@ -223,8 +223,33 @@ async function run() {
     app.post('/booking', verifyToken, async (req, res) => {
       const bookingData = req.body;
       const result = await bookingsCollection.insertOne(bookingData);
-      res.send(result);
+
+      // change room availability 
+      // const roomId = bookingData?.roomId;
+      // const query = { _id: new ObjectId(roomId) };
+      // const updateDoc = {
+      //   $set: {
+      //     booked: true
+      //   },
+      // };
+      // const updateRoom = await roomsCollection.updateOne(query, updateDoc);
+      // console.log(updateRoom);
+      res.send(result); //updateRoom
     });
+
+    // update a room status
+    app.patch('/room/status/:id', verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const status = req.body.status;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          booked: status
+        },
+      };
+      const updateRoom = await roomsCollection.updateOne(query, updateDoc);
+      res.send(updateRoom)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 })
