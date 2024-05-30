@@ -50,6 +50,7 @@ async function run() {
   try {
     const roomsCollection = client.db('stayVistaHotel').collection('rooms');
     const usersCollection = client.db('stayVistaHotel').collection('users');
+    const bookingsCollection = client.db('stayVistaHotel').collection('bookings');
 
     // verify admin middleware
     const verifyAdmin = async (req, res, next) => {
@@ -216,6 +217,13 @@ async function run() {
       });
       // send the client secret in the client side
       res.send({ client_secret: client_secret });
+    });
+
+    // Save a room data in db
+    app.post('/booking', verifyToken, async (req, res) => {
+      const bookingData = req.body;
+      const result = await bookingsCollection.insertOne(bookingData);
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
