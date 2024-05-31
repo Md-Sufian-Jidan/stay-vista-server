@@ -6,6 +6,8 @@ const cookieParser = require('cookie-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// email sender
+const nodemailer = require("nodemailer");
 const port = process.env.PORT || 8000;
 
 // middleware
@@ -19,10 +21,25 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
+// send email
+const sendEmail = async (emailAddress, emailData) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    // host: "smtp.ethereal.email",
+    host: "smtp.gmail.email",
+    port: 587,
+    secure: false, // Use `true` for port 465, `false` for all other ports
+    auth: {
+      user: "jidanjiyaj03@gmail.com",
+      //remember the password is not the gmail password
+      pass: "jn7jnAPss4f63QBp6D",
+    },
+  });
+}
+
 // Verify Token Middleware
 const verifyToken = async (req, res, next) => {
   const token = req.cookies?.token;
-  console.log(token);
   if (!token) {
     return res.status(401).send({ message: 'unauthorized access' });
   }
@@ -32,7 +49,6 @@ const verifyToken = async (req, res, next) => {
       return res.status(401).send({ message: 'unauthorized access' });
     }
     req.user = decoded;
-    console.log(req.user);
     next();
   });
 };
@@ -240,7 +256,7 @@ async function run() {
     });
 
     // update room data 
-    app.put('room/update/:id', verifyToken, async (req, res) => {
+    app.put('/room/update/:id', verifyToken, verifyHost, async (req, res) => {
       const roomData = req.body;
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -249,7 +265,7 @@ async function run() {
           ...roomData
         },
       };
-      
+
       const result = await roomsCollection.updateOne(query, updateDoc);
       res.send(result);
     });
