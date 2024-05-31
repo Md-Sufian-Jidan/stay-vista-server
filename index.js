@@ -30,12 +30,31 @@ const sendEmail = async (emailAddress, emailData) => {
     port: 587,
     secure: false, // Use `true` for port 465, `false` for all other ports
     auth: {
-      user: "jidanjiyaj03@gmail.com",
+      user: `${process.env.TRANSPORTER_EMAIL}`,
       //remember the password is not the gmail password
-      pass: "jn7jnAPss4f63QBp6D",
+      pass: `${process.env.TRANSPORTER_PASS}`,
     },
   });
-}
+  // sending email
+  const mailBody = {
+    from: `"StayVista 👌" ${process.env.TRANSPORTER_EMAIL}`, // sender address
+    to: emailAddress,// list of receivers
+    subject: emailData.subject, // Subject line
+    // text: "Hello world?", // plain text body
+    html: emailData.message, // html body
+  };
+  // send mail with defined transport object
+  const info = transporter.sendMail(mailBody, (error, info) => {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log('Email Sent : ', info.response);
+    }
+  });
+
+  console.log("Message sent: %s", info.messageId);
+  // Message sent: <d786aa62-4e0a-070a-47ed-0b0666549519@ethereal.email>
+};
 
 // Verify Token Middleware
 const verifyToken = async (req, res, next) => {
@@ -91,7 +110,6 @@ async function run() {
       }
       next();
     }
-
 
     // auth related api
     app.post('/jwt', async (req, res) => {
@@ -237,21 +255,23 @@ async function run() {
       res.send({ client_secret: client_secret });
     });
 
-    // Save a room data in db
+
+
+    // Save a booking data in db
     app.post('/booking', verifyToken, async (req, res) => {
       const bookingData = req.body;
       const result = await bookingsCollection.insertOne(bookingData);
+      // send email to the guest  
+      await sendEmail(bookingData?.guest?.email, {
+        subject: 'Booking Successfully',
+        message: `You've successfully booked a room through stayVista. Transaction Id ${bookingData.transactionId}`
+      });
+      // send email to the host  
+      await sendEmail(bookingData?.host?.email, {
+        subject: 'Your room got Booked',
+        message: `Get ready to welcome ${bookingData?.guest?.name}`
+      });
 
-      // change room availability 
-      // const roomId = bookingData?.roomId;
-      // const query = { _id: new ObjectId(roomId) };
-      // const updateDoc = {
-      //   $set: {
-      //     booked: true
-      //   },
-      // };
-      // const updateRoom = await roomsCollection.updateOne(query, updateDoc);
-      // console.log(updateRoom);
       res.send(result); //updateRoom
     });
 
@@ -469,3 +489,14 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`StayVista is running on port ${port}`);
 });
+
+// change room availability 
+// const roomId = bookingData?.roomId;
+// const query = { _id: new ObjectId(roomId) };
+// const updateDoc = {
+//   $set: {
+//     booked: true
+//   },
+// };
+// const updateRoom = await roomsCollection.updateOne(query, updateDoc);
+// console.log(updateRoom);
