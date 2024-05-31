@@ -169,6 +169,20 @@ async function run() {
         },
       };
       const result = await usersCollection.updateOne(query, updateDoc, options);
+      // send email to the new user  
+      await sendEmail(user?.email, {
+        subject: 'Welcome to StayVista',
+        message: `Dear ${user?.name},
+        Welcome to StayVista! We're thrilled to have you as part of our community.At StayVista, we strive to provide the best room booking experience for all our users. Whether you're planning a business trip, a family vacation, or a quick getaway, we've got you covered with a wide range of rooms to suit your needs and preferences.
+
+        Thank you for choosing StayVista. We look forward to helping you find the perfect room for your next adventure!
+        Best regards,
+        [Your Name]
+        [Your Position]
+        StayVista
+        [Your Website URL]
+`
+      });
       res.send(result);
     });
     //  get a user info by email from db
@@ -254,8 +268,6 @@ async function run() {
       // send the client secret in the client side
       res.send({ client_secret: client_secret });
     });
-
-
 
     // Save a booking data in db
     app.post('/booking', verifyToken, async (req, res) => {
